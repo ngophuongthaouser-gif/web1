@@ -161,6 +161,11 @@ exports.deleteProduct = async (req, res) => {
         const { id } = req.params;
         const pool = await getPool();
 
+        // Xoá tham chiếu trong OrderDetails trước nếu có
+        await pool.request()
+            .input('masp', sql.NVarChar, id)
+            .query('DELETE FROM OrderDetails WHERE MaSP = @masp');
+
         await pool.request()
             .input('masp', sql.NVarChar, id)
             .query('DELETE FROM Products WHERE MaSP = @masp');
