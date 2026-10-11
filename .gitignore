@@ -6,3 +6,9 @@ desktop.ini
 # Ignore editor folders
 .vscode/
 .idea/
+
+# Ignore node
+node_modules/
+backend/node_modules/
+backend/.env
+

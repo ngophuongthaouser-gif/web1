@@ -1,9 +1,28 @@
 var TONGTIEN = 0;
 
-window.onload = function () {
+window.onload = async function () {
     // get data từ localstorage
     list_products = getListProducts() || list_products;
     adminInfo = getListAdmin() || adminInfo;
+
+    // Đồng bộ từ Backend API nếu có
+    if (window.API) {
+        try {
+            var [apiProducts, apiUsers] = await Promise.all([
+                API.getProducts(),
+                API.getUsers()
+            ]);
+            if (apiProducts && apiProducts.length > 0) {
+                list_products = apiProducts;
+                setListProducts(apiProducts);
+            }
+            if (apiUsers && apiUsers.length > 0) {
+                setListUser(apiUsers);
+            }
+        } catch (e) {
+            console.warn('Backend chưa sẵn sàng:', e);
+        }
+    }
 
     addEventChangeTab();
 
@@ -15,7 +34,7 @@ window.onload = function () {
 
         openTab('Trang Chủ')
     } else {
-        document.body.innerHTML = `<h1 style="color:red; with:100%; text-align:center; margin: 50px;"> Truy cập bị từ chối.. </h1>`;
+        document.body.innerHTML = `<h1 style="color:red; width:100%; text-align:center; margin: 50px;"> Truy cập bị từ chối.. </h1>`;
     }
 }
 
@@ -321,6 +340,11 @@ function themSanPham() {
 
      // Lưu vào localstorage
      setListProducts(list_products);
+
+     // Gửi lên Backend API nếu có
+     if (window.API) {
+         API.createProduct(newSp).catch(function(e) { console.warn('Lỗi API createProduct:', e); });
+     }
  
      // Vẽ lại table
      addTableProducts();
@@ -353,6 +377,11 @@ function xoaSanPham(masp, tensp) {
         // Lưu vào localstorage
         setListProducts(list_products);
 
+        // Xoá trên Backend API nếu có
+        if (window.API) {
+            API.deleteProduct(masp).catch(function(e) { console.warn('Lỗi API deleteProduct:', e); });
+        }
+
         // Vẽ lại table 
         addTableProducts();
     }
@@ -383,6 +412,11 @@ function suaSanPham(masp) {
 
     // Lưu vào localstorage
     setListProducts(list_products);
+
+    // Cập nhật lên Backend API nếu có
+    if (window.API) {
+        API.updateProduct(masp, sp).catch(function(e) { console.warn('Lỗi API updateProduct:', e); });
+    }
 
     // Vẽ lại table
     addTableProducts();
@@ -801,6 +835,10 @@ function voHieuHoaNguoiDung(inp, taikhoan) {
             u.off = value;
             setListUser(listUser);
             
+            if (window.API) {
+                API.toggleLockUser(taikhoan).catch(function(e) { console.warn('Lỗi API toggleLockUser:', e); });
+            }
+
             setTimeout(() => alert(`${value ? 'Khoá' : 'Mở khoá'} tải khoản ${u.username} thành công.`), 500);
             break;
         }
@@ -817,6 +855,11 @@ function xoaNguoiDung(taikhoan) {
             if(listuser[i].username == taikhoan) {
                 listuser.splice(i, 1); // xóa
                 setListUser(listuser); // lưu thay đổi
+
+                if (window.API) {
+                    API.deleteUser(taikhoan).catch(function(e) { console.warn('Lỗi API deleteUser:', e); });
+                }
+
                 localStorage.removeItem('CurrentUser'); // đăng xuất khỏi tài khoản hiện tại (current user)
                 addTableKhachHang(); // vẽ lại bảng khách hàng
                 addTableDonHang(); // vẽ lại bảng đơn hàng

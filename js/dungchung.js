@@ -18,6 +18,16 @@ function khoiTao() {
     list_products = getListProducts() || list_products;
     adminInfo = getListAdmin() || adminInfo;
 
+    // Đồng bộ sản phẩm từ Backend nếu có
+    if (window.API) {
+        API.getProducts().then(products => {
+            if (products && products.length > 0) {
+                list_products = products;
+                setListProducts(products);
+            }
+        }).catch(function(){});
+    }
+
     setupEventTaiKhoan();
     capNhat_ThongTin_CurrentUser();
     addEventCloseAlertButton();
@@ -187,39 +197,65 @@ function logIn(form) {
     var pass = form.pass.value;
     var newUser = new User(name, pass);
 
-    // Lấy dữ liệu từ danh sách người dùng localstorage
-    var listUser = getListUser();
+    function localLogin() {
+        // Lấy dữ liệu từ danh sách người dùng localstorage
+        var listUser = getListUser();
 
-    // Kiểm tra xem dữ liệu form có khớp với người dùng nào trong danh sách ko
-    for (var u of listUser) {
-        if (equalUser(newUser, u)) {
-            if(u.off) {
-                alert('Tài khoản này đang bị khoá. Không thể đăng nhập.');
+        // Kiểm tra xem dữ liệu form có khớp với người dùng nào trong danh sách ko
+        for (var u of listUser) {
+            if (equalUser(newUser, u)) {
+                if(u.off) {
+                    alert('Tài khoản này đang bị khoá. Không thể đăng nhập.');
+                    return false;
+                }
+
+                setCurrentUser(u);
+                location.reload();
                 return false;
             }
-
-            setCurrentUser(u);
-
-            // Reload lại trang -> sau khi reload sẽ cập nhật luôn giỏ hàng khi hàm setupEventTaiKhoan chạy
-            location.reload();
-            return false;
         }
+
+        // Đăng nhập vào admin
+        for (var ad of adminInfo) {
+            if (equalUser(newUser, ad)) {
+                alert('Xin chào admin .. ');
+                window.localStorage.setItem('admin', true);
+                window.location.assign('admin.html');
+                return false;
+            }
+        }
+
+        alert('Nhập sai tên hoặc mật khẩu !!!');
+        form.username.focus();
+        return false;
     }
 
-    // Đăng nhập vào admin
-    for (var ad of adminInfo) {
-        if (equalUser(newUser, ad)) {
-            alert('Xin chào admin .. ');
-            window.localStorage.setItem('admin', true);
-            window.location.assign('admin.html');
-            return false;
-        }
+    if (window.API) {
+        API.login(name, pass).then(function(res) {
+            if (res) {
+                if (res.success) {
+                    if (res.role === 'admin') {
+                        alert('Xin chào admin .. ');
+                        window.localStorage.setItem('admin', true);
+                        window.location.assign('admin.html');
+                    } else {
+                        setCurrentUser(res.user);
+                        location.reload();
+                    }
+                    return;
+                } else {
+                    alert(res.message || 'Nhập sai tên hoặc mật khẩu !!!');
+                    return;
+                }
+            }
+            localLogin();
+        }).catch(function() {
+            localLogin();
+        });
+        return false;
     }
 
-    // Trả về thông báo nếu không khớp
-    alert('Nhập sai tên hoặc mật khẩu !!!');
-    form.username.focus();
-    return false;
+    return localLogin();
 }
 
 function signUp(form) {
@@ -230,35 +266,49 @@ function signUp(form) {
     var pass = form.newPass.value;
     var newUser = new User(username, pass, ho, ten, email);
 
-    // Lấy dữ liệu các khách hàng hiện có
-    var listUser = getListUser();
-
-    // Kiểm tra trùng admin
-    for (var ad of adminInfo) {
-        if (newUser.username == ad.username) {
-            alert('Tên đăng nhập đã có người sử dụng !!');
-            return false;
+    function localSignUp() {
+        var listUser = getListUser();
+        for (var ad of adminInfo) {
+            if (newUser.username == ad.username) {
+                alert('Tên đăng nhập đã có người sử dụng !!');
+                return false;
+            }
         }
+        for (var u of listUser) {
+            if (newUser.username == u.username) {
+                alert('Tên đăng nhập đã có người sử dụng !!');
+                return false;
+            }
+        }
+
+        listUser.push(newUser);
+        window.localStorage.setItem('ListUser', JSON.stringify(listUser));
+        window.localStorage.setItem('CurrentUser', JSON.stringify(newUser));
+        alert('Đăng kí thành công, Bạn sẽ được tự động đăng nhập!');
+        location.reload();
+        return false;
     }
 
-    // Kiểm tra xem dữ liệu form có trùng với khách hàng đã có không
-    for (var u of listUser) {
-        if (newUser.username == u.username) {
-            alert('Tên đăng nhập đã có người sử dụng !!');
-            return false;
-        }
+    if (window.API) {
+        API.register({ username: username, password: pass, ho: ho, ten: ten, email: email }).then(function(res) {
+            if (res) {
+                if (res.success) {
+                    window.localStorage.setItem('CurrentUser', JSON.stringify(newUser));
+                    alert('Đăng kí thành công, Bạn sẽ được tự động đăng nhập!');
+                    location.reload();
+                } else {
+                    alert(res.message || 'Không thể đăng ký!');
+                }
+                return;
+            }
+            localSignUp();
+        }).catch(function() {
+            localSignUp();
+        });
+        return false;
     }
 
-    // Lưu người mới vào localstorage
-    listUser.push(newUser);
-    window.localStorage.setItem('ListUser', JSON.stringify(listUser));
-
-    // Đăng nhập vào tài khoản mới tạo
-    window.localStorage.setItem('CurrentUser', JSON.stringify(newUser));
-    alert('Đăng kí thành công, Bạn sẽ được tự động đăng nhập!');
-    location.reload();
-
-    return false;
+    return localSignUp();
 }
 
 function logOut() {
