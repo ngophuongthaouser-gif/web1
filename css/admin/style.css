@@ -8,13 +8,13 @@
 body,
 html {
     min-width: 1024px;
-    background-color: #2f353a;
+    background-color: #fef9e7;
 }
 
 hr {
-    color: rgb(95, 95, 95);
-    background-color: rgb(95, 95, 95);
-    border-top: 2px solid rgb(95, 95, 95);
+    color: #d4a017;
+    background-color: #d4a017;
+    border-top: 2px solid #d4a017;
     border-bottom: none;
     border-left: none;
     border-right: none;
@@ -31,8 +31,8 @@ header {
     width: 100%;
     /* position: sticky; */
     padding: 20px 10px;
-    background-color: #3a4149;
-    border-bottom: 1px solid #23282c;
+    background-color: #f39c12;
+    border-bottom: 1px solid #d68910;
 }
 
 header h2 {
@@ -40,6 +40,7 @@ header h2 {
     font-size: 1.5em;
     font-weight: bold;
     color: #fff;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
 }
 
 /* =========== Menu ================= */
@@ -52,7 +53,7 @@ header h2 {
     padding: 1.1rem 1rem;
     font-size: 1.5em;
     font-weight: 700;
-    color: #e4e7ea;
+    color: #7d5a00;
     text-align: center;
     text-transform: uppercase;
 }
@@ -66,7 +67,7 @@ header h2 {
 .sidebar .nav-link {
     display: block;
     padding: 1em 1em;
-    color: #73818f;
+    color: #7d5a00;
     text-decoration: none;
     background: 0 0;
     cursor: pointer;
@@ -74,14 +75,14 @@ header h2 {
 
 .sidebar .nav-link.active,
 .sidebar .nav-link.active i {
-    background-color: #20a8d8;
+    background-color: #f39c12;
     color: #fff;
 }
 
 .sidebar .nav-link:hover:not(.active),
 .sidebar .nav-link:hover:not(.active) i {
-    background-color: #4a7b8d;
-    color: #fff;
+    background-color: #f7ca5e;
+    color: #5a3e00;
 }
 
 .sidebar .nav-link i {
@@ -89,7 +90,7 @@ header h2 {
     width: 1.09375em;
     margin: 0 .5rem 0 0;
     font-size: 1em;
-    color: #73818f;
+    color: #b8860b;
     text-align: center;
 }
 
@@ -153,7 +154,7 @@ header h2 {
 /* ==================== table ====================== */
 .table-outline {
     width: 100%;
-    border: 1px solid #23282c;
+    border: 1px solid #d4a017;
 }
 
 /* phần chứa header (th) */
@@ -162,9 +163,9 @@ header h2 {
 }
 
 .table-header th {
-    color: #e4e7ea;
-    background-color: #3e464d;
-    border-color: #23282c;
+    color: #5a3e00;
+    background-color: #f7ca5e;
+    border-color: #d4a017;
 }
 
 .table-header th {
@@ -186,7 +187,7 @@ header h2 {
     padding: .75rem;
     text-align: center;
     vertical-align: top;
-    border-top: 1px solid #23282c;
+    border-top: 1px solid #d4a017;
 }
 
 /* phần chứa nội dung  */
@@ -199,18 +200,18 @@ header h2 {
 }
 
 .table-content tr:nth-of-type(even) {
-    background-color: #3e4144;
+    background-color: #fef3cd;
 }
 
 .table-content td {
     position: relative;
-    color: #e4e7ea;
+    color: #3d2b00;
 }
 
 /* Link chi tiet san pham */
 .table-content td a {
     display: block;
-    color: #e4e7ea;
+    color: #7d5a00;
 }
 
 .table-content td a:hover {
@@ -241,10 +242,10 @@ header h2 {
 
 /*  phần footer table  */
 .table-footer {
-    background-color: #3e464d;
+    background-color: #f7ca5e;
     padding: .75rem;
     vertical-align: top;
-    border-top: 1px solid #23282c;
+    border-top: 1px solid #d4a017;
 }
 
 .table-footer input,
@@ -252,20 +253,20 @@ header h2 {
 .table-footer select {
     padding: 5px 10px;
     border: 3px solid transparent;
-    background-color: #cccece;
+    background-color: #fffbe6;
 }
 
 /* Nút bấm ở footer */
 .table-footer button {
     cursor: pointer;
-    background-color: #23282c;
-    color: #e4e7ea;
+    background-color: #d68910;
+    color: #fff;
     transition-duration: .2s;
 }
 
 .table-footer button:hover {
-    background-color: #7a879486;
-    border-color: #73818f;
+    background-color: #b8770c;
+    border-color: #9a6309;
 }
 
 /* ================== Những table thêm sửa sẽ có dạng overlay -> mặc định ẩn  ====================== */
@@ -285,7 +286,7 @@ header h2 {
 .overlayTable {
     margin: 50px auto;
     width: auto;
-    background-color: #23282c;
+    background-color: #fffde7;
 }
 
 .overlayTable td:first-child {
@@ -331,8 +332,8 @@ header h2 {
     float: left;
     margin-right: 50px;
     padding-right: 10px;
-    color: #e4e7ea;
-    border-right: 2px solid #777;
+    color: #5a3e00;
+    border-right: 2px solid #d4a017;
 }
 
 /* ========================= tooltip from w3school  ====================== */
