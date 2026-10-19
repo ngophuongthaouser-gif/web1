@@ -71,10 +71,24 @@ const API = {
         }
     },
 
+    // Tạo tài khoản khách hàng từ trang quản trị
+    async createUser(user) {
+        try {
+            const res = await fetch(`${API_BASE_URL}/users`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(user)
+            });
+            return await res.json();
+        } catch (e) {
+            return null;
+        }
+    },
+
     // 6. Products: Sửa sản phẩm
     async updateProduct(id, product) {
         try {
-            const res = await fetch(`${API_BASE_URL}/products/${id}`, {
+            const res = await fetch(`${API_BASE_URL}/products/${encodeURIComponent(id)}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(product)
@@ -88,7 +102,7 @@ const API = {
     // 7. Products: Xoá sản phẩm
     async deleteProduct(id) {
         try {
-            const res = await fetch(`${API_BASE_URL}/products/${id}`, {
+            const res = await fetch(`${API_BASE_URL}/products/${encodeURIComponent(id)}`, {
                 method: 'DELETE'
             });
             return await res.json();
@@ -111,7 +125,7 @@ const API = {
     // 9. Users: Khoá / Mở khoá
     async toggleLockUser(username) {
         try {
-            const res = await fetch(`${API_BASE_URL}/users/${username}/toggle-lock`, {
+            const res = await fetch(`${API_BASE_URL}/users/${encodeURIComponent(username)}/toggle-lock`, {
                 method: 'PUT'
             });
             return await res.json();
@@ -123,7 +137,7 @@ const API = {
     // 10. Users: Xoá người dùng
     async deleteUser(username) {
         try {
-            const res = await fetch(`${API_BASE_URL}/users/${username}`, {
+            const res = await fetch(`${API_BASE_URL}/users/${encodeURIComponent(username)}`, {
                 method: 'DELETE'
             });
             return await res.json();
@@ -146,7 +160,7 @@ const API = {
     // 12. Orders: Lấy đơn hàng theo user
     async getOrdersByUser(username) {
         try {
-            const res = await fetch(`${API_BASE_URL}/orders/user/${username}`);
+            const res = await fetch(`${API_BASE_URL}/orders/user/${encodeURIComponent(username)}`);
             const data = await res.json();
             return data.success ? data.data : null;
         } catch (e) {
@@ -169,12 +183,12 @@ const API = {
     },
 
     // 14. Orders: Cập nhật trạng thái đơn (Duyệt / Huỷ)
-    async updateOrderStatus(id, tinhTrang) {
+    async updateOrderStatus(id, tinhTrang, username) {
         try {
-            const res = await fetch(`${API_BASE_URL}/orders/${id}/status`, {
+            const res = await fetch(`${API_BASE_URL}/orders/${encodeURIComponent(id)}/status`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tinhTrang })
+                body: JSON.stringify({ tinhTrang, username })
             });
             return await res.json();
         } catch (e) {

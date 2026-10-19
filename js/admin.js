@@ -1,4 +1,17 @@
 var TONGTIEN = 0;
+var adminOrders = [];
+var adminOrdersLoaded = false;
+var adminUsers = [];
+var adminUsersLoaded = false;
+var adminCharts = {};
+
+function cacheAdminProducts() {
+    try {
+        setListProducts(list_products);
+    } catch (e) {
+        console.warn('Không thể lưu bản sao sản phẩm vào localStorage:', e);
+    }
+}
 
 window.onload = async function () {
     // get data từ localstorage
@@ -8,16 +21,25 @@ window.onload = async function () {
     // Đồng bộ từ Backend API nếu có
     if (window.API) {
         try {
-            var [apiProducts, apiUsers] = await Promise.all([
+            var [apiProducts, apiUsers, apiOrders] = await Promise.all([
                 API.getProducts(),
-                API.getUsers()
+                API.getUsers(),
+                API.getOrders()
             ]);
-            if (apiProducts && apiProducts.length > 0) {
+            if (Array.isArray(apiProducts)) {
                 list_products = apiProducts;
-                setListProducts(apiProducts);
+                cacheAdminProducts();
             }
-            if (apiUsers && apiUsers.length > 0) {
-                setListUser(apiUsers);
+            if (Array.isArray(apiUsers)) {
+                adminUsers = apiUsers;
+                adminUsersLoaded = true;
+            }
+            if (Array.isArray(apiOrders)) {
+                adminOrders = apiOrders;
+                adminOrdersLoaded = true;
+            }
+            if (!Array.isArray(apiProducts) || !Array.isArray(apiUsers) || !Array.isArray(apiOrders)) {
+                alert('Chưa tải đủ dữ liệu từ database. Hãy kiểm tra backend và kết nối SQL Server.');
             }
         } catch (e) {
             console.warn('Backend chưa sẵn sàng:', e);
@@ -51,8 +73,9 @@ function getListRandomColor(length) {
 }
 
 function addChart(id, chartOption) {
+    if (adminCharts[id]) adminCharts[id].destroy();
     var ctx = document.getElementById(id).getContext('2d');
-    var chart = new Chart(ctx, chartOption);
+    adminCharts[id] = new Chart(ctx, chartOption);
 }
 
 function createChartConfig(
@@ -103,7 +126,7 @@ function addThongKe() {
 
         // Lặp qua từng sản phẩm trong đơn hàng
         donHang.sp.forEach(sanPhamTrongDonHang => {
-            let tenHang = sanPhamTrongDonHang.sanPham.company;
+            let tenHang = sanPhamTrongDonHang.sanPham.company || 'Khác';
             let soLuong = sanPhamTrongDonHang.soLuong;
             let donGia = stringToNum(sanPhamTrongDonHang.sanPham.price);
             let thanhTien = soLuong * donGia;
@@ -250,7 +273,6 @@ function timKiemSanPham(inp) {
 }
 
 // Thêm
-let previewSrc; // biến toàn cục lưu file ảnh đang thêm
 function layThongTinSanPhamTuTable(id) {
     var khung = document.getElementById(id);
     var tr = khung.getElementsByTagName('tr');
@@ -258,7 +280,8 @@ function layThongTinSanPhamTuTable(id) {
     var masp = tr[1].getElementsByTagName('td')[1].getElementsByTagName('input')[0].value;
     var name = tr[2].getElementsByTagName('td')[1].getElementsByTagName('input')[0].value;
     var company = tr[3].getElementsByTagName('td')[1].getElementsByTagName('select')[0].value;
-    var img = tr[4].getElementsByTagName('td')[1].getElementsByTagName('img')[0].src;
+    var imgElement = tr[4].getElementsByTagName('td')[1].getElementsByTagName('img')[0];
+    var img = imgElement.getAttribute('src') || '';
     var price = tr[5].getElementsByTagName('td')[1].getElementsByTagName('input')[0].value;
     var star = tr[6].getElementsByTagName('td')[1].getElementsByTagName('input')[0].value;
     var rateCount = tr[7].getElementsByTagName('td')[1].getElementsByTagName('input')[0].value;
@@ -275,18 +298,19 @@ function layThongTinSanPhamTuTable(id) {
     var microUSB = tr[18].getElementsByTagName('td')[1].getElementsByTagName('input')[0].value;
     var battery = tr[19].getElementsByTagName('td')[1].getElementsByTagName('input')[0].value;
 
-    if(isNaN(price)) {
-        alert('Giá phải là số nguyên');
+    var normalizedPrice = price.replace(/[.,\s]/g, '');
+    if(!/^\d+$/.test(normalizedPrice) || Number(normalizedPrice) <= 0) {
+        alert('Giá phải là số nguyên lớn hơn 0');
         return false;
     }
 
-    if(isNaN(star)) {
-        alert('Số sao phải là số nguyên');
+    if(star.trim() && (!/^\d+$/.test(star) || Number(star) > 5)) {
+        alert('Số sao phải là số nguyên từ 0 đến 5');
         return false;
     }
 
-    if(isNaN(rateCount)) {
-        alert('Số đánh giá phải là số nguyên');
+    if(rateCount.trim() && !/^\d+$/.test(rateCount)) {
+        alert('Số đánh giá phải là số nguyên không âm');
         return false;
     }
 
@@ -294,10 +318,10 @@ function layThongTinSanPhamTuTable(id) {
         return {
             "name": name,
             "company": company,
-            "img": previewSrc,
-            "price": numToString(Number.parseInt(price, 10)),
-            "star": Number.parseInt(star, 10),
-            "rateCount": Number.parseInt(rateCount, 10),
+            "img": img,
+            "price": numToString(Number.parseInt(normalizedPrice, 10)),
+            "star": Number.parseInt(star || '0', 10),
+            "rateCount": Number.parseInt(rateCount || '0', 10),
             "promo": {
                 "name": promoName,
                 "value": promoValue
@@ -320,7 +344,7 @@ function layThongTinSanPhamTuTable(id) {
         return false;
     }
 }
-function themSanPham() {
+async function themSanPham() {
     var newSp = layThongTinSanPhamTuTable('khungThemSanPham');
     if(!newSp) return;
 
@@ -335,22 +359,28 @@ function themSanPham() {
             return false;
         }
     }
-     // Them san pham vao list_products
-     list_products.push(newSp);
-
-     // Lưu vào localstorage
-     setListProducts(list_products);
-
-     // Gửi lên Backend API nếu có
      if (window.API) {
-         API.createProduct(newSp).catch(function(e) { console.warn('Lỗi API createProduct:', e); });
+         var response = await API.createProduct(newSp);
+         if (!response || !response.success) {
+             alert(response && response.message ? response.message : 'Không kết nối được database. Sản phẩm chưa được thêm.');
+             return false;
+         }
      }
+
+     list_products.push(newSp);
+     cacheAdminProducts();
  
      // Vẽ lại table
      addTableProducts();
 
     alert('Thêm sản phẩm "' + newSp.name + '" thành công.');
-    document.getElementById('khungThemSanPham').style.transform = 'scale(0)';
+    var addForm = document.getElementById('khungThemSanPham');
+    for (var input of addForm.querySelectorAll('input[type="text"]')) input.value = '';
+    for (var fileInput of addForm.querySelectorAll('input[type="file"]')) fileInput.value = '';
+    addForm.querySelector('.hinhDaiDien').setAttribute('src', '');
+    addForm.getElementsByTagName('select')[1].selectedIndex = 0;
+    autoMaSanPham();
+    addForm.style.transform = 'scale(0)';
 }
 function autoMaSanPham(company) {
     // hàm tự tạo mã cho sản phẩm mới
@@ -365,8 +395,16 @@ function autoMaSanPham(company) {
 }
 
 // Xóa
-function xoaSanPham(masp, tensp) {
+async function xoaSanPham(masp, tensp) {
     if (window.confirm('Bạn có chắc muốn xóa ' + tensp)) {
+        if (window.API) {
+            var response = await API.deleteProduct(masp);
+            if (!response || !response.success) {
+                alert(response && response.message ? response.message : 'Không kết nối được database. Sản phẩm chưa bị xóa.');
+                return false;
+            }
+        }
+
         // Xóa
         for(var i = 0; i < list_products.length; i++) {
             if(list_products[i].masp == masp) {
@@ -375,12 +413,7 @@ function xoaSanPham(masp, tensp) {
         }
 
         // Lưu vào localstorage
-        setListProducts(list_products);
-
-        // Xoá trên Backend API nếu có
-        if (window.API) {
-            API.deleteProduct(masp).catch(function(e) { console.warn('Lỗi API deleteProduct:', e); });
-        }
+        cacheAdminProducts();
 
         // Vẽ lại table 
         addTableProducts();
@@ -388,7 +421,7 @@ function xoaSanPham(masp, tensp) {
 }
 
 // Sửa
-function suaSanPham(masp) {
+async function suaSanPham(masp) {
     var sp = layThongTinSanPhamTuTable('khungSuaSanPham');
     if(!sp) return;
     
@@ -403,6 +436,14 @@ function suaSanPham(masp) {
             return false;
         }
     }
+    if (window.API) {
+        var response = await API.updateProduct(masp, sp);
+        if (!response || !response.success) {
+            alert(response && response.message ? response.message : 'Không kết nối được database. Sản phẩm chưa được cập nhật.');
+            return false;
+        }
+    }
+
     // Sửa
     for(var i = 0; i < list_products.length; i++) {
         if(list_products[i].masp == masp) {
@@ -411,12 +452,7 @@ function suaSanPham(masp) {
     }
 
     // Lưu vào localstorage
-    setListProducts(list_products);
-
-    // Cập nhật lên Backend API nếu có
-    if (window.API) {
-        API.updateProduct(masp, sp).catch(function(e) { console.warn('Lỗi API updateProduct:', e); });
-    }
+    cacheAdminProducts();
 
     // Vẽ lại table
     addTableProducts();
@@ -441,7 +477,7 @@ function addKhungSuaSanPham(masp) {
         </tr>
         <tr>
             <td>Mã sản phẩm:</td>
-            <td><input type="text" value="`+sp.masp+`"></td>
+            <td><input type="text" value="`+sp.masp+`" readonly></td>
         </tr>
         <tr>
             <td>Tên sẩn phẩm:</td>
@@ -556,8 +592,7 @@ function capNhatAnhSanPham(files, id) {
     const reader = new FileReader();
     reader.addEventListener("load", function () {
         // convert image file to base64 string
-        previewSrc = reader.result;
-        document.getElementById(id).src = previewSrc;
+        document.getElementById(id).setAttribute('src', reader.result);
     }, false);
 
     if (files[0]) {
@@ -598,7 +633,7 @@ function addTableDonHang() {
     TONGTIEN = 0;
     for (var i = 0; i < listDH.length; i++) {
         var d = listDH[i];
-        s += `<tr>
+        s += `<tr data-order-date="` + new Date(d.ngaymua).toISOString() + `">
             <td style="width: 5%">` + (i+1) + `</td>
             <td style="width: 13%">` + d.ma + `</td>
             <td style="width: 7%">` + d.khach + `</td>
@@ -607,6 +642,7 @@ function addTableDonHang() {
             <td style="width: 10%">` + d.ngaygio + `</td>
             <td style="width: 10%">` + d.tinhTrang + `</td>
             <td style="width: 10%">
+                `+(d.tinhTrang === 'Đang chờ xử lý' ? `
                 <div class="tooltip">
                     <i class="fa fa-check" onclick="duyet('`+d.ma+`', true)"></i>
                     <span class="tooltiptext">Duyệt</span>
@@ -614,7 +650,7 @@ function addTableDonHang() {
                 <div class="tooltip">
                     <i class="fa fa-remove" onclick="duyet('`+d.ma+`', false)"></i>
                     <span class="tooltiptext">Hủy</span>
-                </div>
+                </div>` : '')+`
                 
             </td>
         </tr>`;
@@ -626,10 +662,47 @@ function addTableDonHang() {
 }
 
 function getListDonHang(traVeDanhSachSanPham = false) {
+    if (adminOrdersLoaded) {
+        return adminOrders.map(function(order) {
+            var orderItems = (order.sp || []).map(function(item) {
+                var product = list_products.find(function(p) { return p.masp === item.ma; }) || {
+                    masp: item.ma,
+                    name: item.name || 'Sản phẩm đã ngừng kinh doanh',
+                    company: item.company || '',
+                    img: item.img || '',
+                    price: item.dongia || '0',
+                    promo: { name: '', value: '' },
+                    detail: {}
+                };
+                product = Object.assign({}, product, { price: item.dongia || product.price });
+                return {
+                    ma: item.ma,
+                    name: item.name || product.name,
+                    soluong: Number(item.soluong) || 1,
+                    dongia: item.dongia || product.price,
+                    sanPham: product,
+                    soLuong: Number(item.soluong) || 1
+                };
+            });
+            var productHtml = orderItems.map(function(item) {
+                return `<p style="text-align:right">${item.name} [${item.soluong}]</p>`;
+            }).join('');
+            return {
+                ma: order.ma,
+                khach: order.khach,
+                sp: traVeDanhSachSanPham ? orderItems : productHtml,
+                tongtien: order.tongtien || '0',
+                ngaygio: order.ngaygio || (order.ngaymua ? new Date(order.ngaymua).toLocaleString('vi-VN') : ''),
+                ngaymua: order.ngaymua || new Date(),
+                tinhTrang: order.tinhTrang
+            };
+        });
+    }
+
     var u = getListUser();
     var result = [];
     for(var i = 0; i < u.length; i++) {
-        for(var j = 0; j < u[i].donhang.length; j++) {
+        for(var j = 0; j < (u[i].donhang || []).length; j++) {
             // Tổng tiền
             var tongtien = 0;
             for(var s of u[i].donhang[j].sp) {
@@ -671,7 +744,31 @@ function getListDonHang(traVeDanhSachSanPham = false) {
 }
 
 // Duyệt
-function duyet(maDonHang, duyetDon) {
+async function duyet(maDonHang, duyetDon) {
+    if (adminOrdersLoaded && window.API) {
+        var order = adminOrders.find(function(item) { return item.ma === maDonHang; });
+        if (!order) {
+            alert('Không tìm thấy đơn hàng trong database.');
+            return;
+        }
+        if (order.tinhTrang !== 'Đang chờ xử lý') {
+            alert(order.tinhTrang === 'Đã hủy' ? 'Không thể duyệt đơn đã hủy.' : 'Đơn hàng này đã được xử lý.');
+            return;
+        }
+        if (!duyetDon && !window.confirm('Bạn có chắc muốn hủy đơn hàng này?')) return;
+
+        var nextStatus = duyetDon ? 'Đã giao hàng' : 'Đã hủy';
+        var response = await API.updateOrderStatus(maDonHang, nextStatus);
+        if (!response || !response.success) {
+            alert(response && response.message ? response.message : 'Không kết nối được database. Trạng thái đơn hàng chưa đổi.');
+            return;
+        }
+        order.tinhTrang = nextStatus;
+        addTableDonHang();
+        addThongKe();
+        return;
+    }
+
     var u = getListUser();
     for(var i = 0; i < u.length; i++) {
         for(var j = 0; j < u[i].donhang.length; j++) {
@@ -707,15 +804,16 @@ function duyet(maDonHang, duyetDon) {
 }
 
 function locDonHangTheoKhoangNgay() {
-    var from = document.getElementById('fromDate').valueAsDate;
-    var to = document.getElementById('toDate').valueAsDate;
+    var fromValue = document.getElementById('fromDate').value;
+    var toValue = document.getElementById('toDate').value;
+    var from = fromValue ? new Date(fromValue + 'T00:00:00') : null;
+    var to = toValue ? new Date(toValue + 'T23:59:59.999') : null;
 
     var listTr_table = document.getElementsByClassName('donhang')[0].getElementsByClassName('table-content')[0].getElementsByTagName('tr');
     for (var tr of listTr_table) {
-        var td = tr.getElementsByTagName('td')[5].innerHTML;
-        var d = new Date(td);
+        var d = new Date(tr.dataset.orderDate);
 
-        if (d >= from && d <= to) {
+        if ((!from || d >= from) && (!to || d <= to)) {
             tr.style.display = '';
         } else {
             tr.style.display = 'none';
@@ -756,7 +854,7 @@ function getValueOfTypeInTable_DonHang(tr, loai) {
     var td = tr.getElementsByTagName('td');
     switch(loai) {
         case 'stt': return Number(td[0].innerHTML);
-        case 'ma' : return new Date(td[1].innerHTML); // chuyển về dạng ngày để so sánh ngày
+        case 'ma' : return td[1].innerHTML.toLowerCase();
         case 'khach' : return td[2].innerHTML.toLowerCase(); // lấy tên khách
         case 'sanpham' : return td[3].children.length;    // lấy số lượng hàng trong đơn này, length ở đây là số lượng <p>
         case 'tongtien' : return stringToNum(td[4].innerHTML); // trả về dạng giá tiền
@@ -772,7 +870,7 @@ function addTableKhachHang() {
     var tc = document.getElementsByClassName('khachhang')[0].getElementsByClassName('table-content')[0];
     var s = `<table class="table-outline hideImg">`;
 
-    var listUser = getListUser();
+    var listUser = adminUsersLoaded ? adminUsers : getListUser();
 
     for (var i = 0; i < listUser.length; i++) {
         var u = listUser[i];
@@ -781,7 +879,7 @@ function addTableKhachHang() {
             <td style="width: 15%">` + u.ho + ' ' + u.ten + `</td>
             <td style="width: 20%">` + u.email + `</td>
             <td style="width: 20%">` + u.username + `</td>
-            <td style="width: 10%">` + u.pass + `</td>
+            <td style="width: 10%">••••••</td>
             <td style="width: 10%">
                 <div class="tooltip">
                     <label class="switch">
@@ -822,43 +920,68 @@ function timKiemNguoiDung(inp) {
     }
 }
 
-function openThemNguoiDung() {
-    window.alert('Not Available!');
+async function openThemNguoiDung() {
+    var username = window.prompt('Tên đăng nhập khách hàng mới:');
+    if (!username) return;
+    var pass = window.prompt('Mật khẩu:');
+    if (!pass) return;
+    var ho = window.prompt('Họ:', '') || '';
+    var ten = window.prompt('Tên:', '') || '';
+    var email = window.prompt('Email:', '') || '';
+
+    var response = window.API ? await API.createUser({ username: username, pass: pass, ho: ho, ten: ten, email: email }) : null;
+    if (!response || !response.success) {
+        alert(response && response.message ? response.message : 'Không kết nối được database. Khách hàng chưa được thêm.');
+        return;
+    }
+    await taiLaiKhachHang();
+    addTableKhachHang();
+    alert('Đã thêm khách hàng ' + username + '.');
 }
 
 // vô hiệu hóa người dùng (tạm dừng, không cho đăng nhập vào)
-function voHieuHoaNguoiDung(inp, taikhoan) {
-    var listUser = getListUser();
+async function taiLaiKhachHang() {
+    if (!window.API) return;
+    var users = await API.getUsers();
+    if (Array.isArray(users)) {
+        adminUsers = users;
+        adminUsersLoaded = true;
+    }
+}
+
+async function voHieuHoaNguoiDung(inp, taikhoan) {
+    var listUser = adminUsersLoaded ? adminUsers : getListUser();
     for(var u of listUser) {
         if(u.username == taikhoan) {
-            let value = !inp.checked
-            u.off = value;
-            setListUser(listUser);
-            
-            if (window.API) {
-                API.toggleLockUser(taikhoan).catch(function(e) { console.warn('Lỗi API toggleLockUser:', e); });
+            var response = window.API ? await API.toggleLockUser(taikhoan) : null;
+            if (!response || !response.success) {
+                inp.checked = !inp.checked;
+                alert(response && response.message ? response.message : 'Không kết nối được database. Trạng thái khách hàng chưa đổi.');
+                return;
             }
-
-            setTimeout(() => alert(`${value ? 'Khoá' : 'Mở khoá'} tải khoản ${u.username} thành công.`), 500);
+            u.off = response.isLocked;
+            if (!adminUsersLoaded) setListUser(listUser);
+            var span = inp.parentElement.nextElementSibling;
+            span.innerHTML = (inp.checked?'Khóa':'Mở');
+            alert(`${u.off ? 'Khoá' : 'Mở khoá'} tài khoản ${u.username} thành công.`);
             break;
         }
     }
-    var span = inp.parentElement.nextElementSibling;
-        span.innerHTML = (inp.checked?'Khóa':'Mở');
 }
 
 // Xóa người dùng
-function xoaNguoiDung(taikhoan) {
+async function xoaNguoiDung(taikhoan) {
     if(window.confirm('Xác nhận xóa '+taikhoan+'? \nMọi dữ liệu về '+taikhoan+' sẽ mất! Bao gồm cả những đơn hàng của '+taikhoan)) {
-        var listuser = getListUser();
+        var listuser = adminUsersLoaded ? adminUsers : getListUser();
         for(var i = 0; i < listuser.length; i++) {
             if(listuser[i].username == taikhoan) {
-                listuser.splice(i, 1); // xóa
-                setListUser(listuser); // lưu thay đổi
-
-                if (window.API) {
-                    API.deleteUser(taikhoan).catch(function(e) { console.warn('Lỗi API deleteUser:', e); });
+                var response = window.API ? await API.deleteUser(taikhoan) : null;
+                if (!response || !response.success) {
+                    alert(response && response.message ? response.message : 'Không kết nối được database. Khách hàng chưa bị xóa.');
+                    return;
                 }
+                listuser.splice(i, 1); // xóa
+                if (!adminUsersLoaded) setListUser(listuser); // lưu thay đổi
 
                 localStorage.removeItem('CurrentUser'); // đăng xuất khỏi tài khoản hiện tại (current user)
                 addTableKhachHang(); // vẽ lại bảng khách hàng

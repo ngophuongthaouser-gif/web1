@@ -28,6 +28,11 @@ function formatProduct(row) {
     };
 }
 
+function validPrice(value) {
+    const price = String(value || '').trim();
+    return /^\d+(?:[.,]\d+)*$/.test(price) && Number(price.replace(/[.,]/g, '')) > 0;
+}
+
 // Lấy tất cả sản phẩm
 exports.getAllProducts = async (req, res) => {
     try {
@@ -65,7 +70,7 @@ exports.getProductById = async (req, res) => {
 exports.createProduct = async (req, res) => {
     try {
         const p = req.body;
-        if (!p.masp || !p.name || !p.price) {
+        if (!p.masp || !String(p.name || '').trim() || !validPrice(p.price)) {
             return res.status(400).json({ success: false, message: 'Mã, tên và giá sản phẩm là bắt buộc!' });
         }
 
@@ -87,7 +92,7 @@ exports.createProduct = async (req, res) => {
             .input('masp', sql.NVarChar, p.masp)
             .input('name', sql.NVarChar, p.name)
             .input('company', sql.NVarChar, p.company || '')
-            .input('img', sql.NVarChar, p.img || '')
+            .input('img', sql.NVarChar(sql.MAX), p.img || '')
             .input('price', sql.NVarChar, p.price)
             .input('star', sql.Int, p.star || 0)
             .input('rateCount', sql.Int, p.rateCount || 0)
@@ -117,16 +122,26 @@ exports.updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
         const p = req.body;
+        if (!String(p.name || '').trim() || !validPrice(p.price)) {
+            return res.status(400).json({ success: false, message: 'Tên và giá sản phẩm là bắt buộc, giá phải là số!' });
+        }
         const pool = await getPool();
 
         const detail = p.detail || {};
         const promo = p.promo || {};
 
+        const exists = await pool.request()
+            .input('masp', sql.NVarChar, id)
+            .query('SELECT MaSP FROM Products WHERE MaSP = @masp');
+        if (exists.recordset.length === 0) {
+            return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm!' });
+        }
+
         await pool.request()
             .input('masp', sql.NVarChar, id)
             .input('name', sql.NVarChar, p.name)
             .input('company', sql.NVarChar, p.company || '')
-            .input('img', sql.NVarChar, p.img || '')
+            .input('img', sql.NVarChar(sql.MAX), p.img || '')
             .input('price', sql.NVarChar, p.price)
             .input('star', sql.Int, p.star || 0)
             .input('rateCount', sql.Int, p.rateCount || 0)
@@ -161,14 +176,24 @@ exports.deleteProduct = async (req, res) => {
         const { id } = req.params;
         const pool = await getPool();
 
-        // Xoá tham chiếu trong OrderDetails trước nếu có
-        await pool.request()
+        const result = await pool.request()
             .input('masp', sql.NVarChar, id)
-            .query('DELETE FROM OrderDetails WHERE MaSP = @masp');
+            .query(`DELETE FROM Products
+                    WHERE MaSP = @masp
+                      AND NOT EXISTS (SELECT 1 FROM OrderDetails WHERE MaSP = @masp)`);
 
-        await pool.request()
-            .input('masp', sql.NVarChar, id)
-            .query('DELETE FROM Products WHERE MaSP = @masp');
+        if (result.rowsAffected[0] === 0) {
+            const exists = await pool.request()
+                .input('masp', sql.NVarChar, id)
+                .query('SELECT MaSP FROM Products WHERE MaSP = @masp');
+            if (exists.recordset.length === 0) {
+                return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm!' });
+            }
+            return res.status(409).json({
+                success: false,
+                message: 'Sản phẩm đã có trong đơn hàng nên không thể xóa để bảo toàn lịch sử mua hàng.'
+            });
+        }
 
         return res.json({ success: true, message: 'Xoá sản phẩm thành công!' });
     } catch (err) {

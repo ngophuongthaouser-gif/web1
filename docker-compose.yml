@@ -1,18 +1,24 @@
 version: '3.8'
 
 services:
-  # 1. Cơ sở dữ liệu SQL Server (Chạy trên Linux container)
+  # 1. Cơ sở dữ liệu SQL Server
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: webdienthoai-mssql
     restart: always
     environment:
       - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=Password123!
+      - MSSQL_SA_PASSWORD=${DB_PASSWORD:-Password123!}
     ports:
       - "1433:1433"
     volumes:
       - mssql-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"${DB_PASSWORD:-Password123!}\" -C -Q 'SELECT 1' || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
     networks:
       - webnet
 
@@ -30,10 +36,12 @@ services:
       - DB_SERVER=sqlserver
       - DB_PORT=1433
       - DB_USER=sa
-      - DB_PASSWORD=Password123!
+      - DB_PASSWORD=${DB_PASSWORD:-Password123!}
       - DB_NAME=WebDienThoaiDB
+      - NODE_ENV=production
     depends_on:
-      - sqlserver
+      sqlserver:
+        condition: service_healthy
     networks:
       - webnet
 

@@ -159,7 +159,12 @@ function themVaoGioHang(masp, tensp) {
 
 // Hàm get set cho người dùng hiện tại đã đăng nhập
 function getCurrentUser() {
-    return JSON.parse(window.localStorage.getItem('CurrentUser')); // Lấy dữ liệu từ localstorage
+	var user = JSON.parse(window.localStorage.getItem('CurrentUser')); // Lấy dữ liệu từ localstorage
+	if (user) {
+		user.products = user.products || [];
+		user.donhang = user.donhang || [];
+	}
+	return user;
 }
 
 function setCurrentUser(u) {
@@ -239,6 +244,8 @@ function logIn(form) {
                         window.localStorage.setItem('admin', true);
                         window.location.assign('admin.html');
                     } else {
+                        res.user.products = res.user.products || [];
+                        res.user.donhang = res.user.donhang || [];
                         setCurrentUser(res.user);
                         location.reload();
                     }

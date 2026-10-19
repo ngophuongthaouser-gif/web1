@@ -2,7 +2,7 @@ var currentUser;
 var tongTienTatCaDonHang = 0; // lưu tổng tiền từ tất cả các đơn hàng đã mua
 var tongSanPhamTatCaDonHang = 0;
 
-window.onload = function () {
+window.onload = async function () {
     khoiTao();
 
     // autocomplete cho khung tim kiem
@@ -15,6 +15,39 @@ window.onload = function () {
     currentUser = getCurrentUser();
 
     if (currentUser) {
+        currentUser.products = currentUser.products || [];
+        currentUser.donhang = currentUser.donhang || [];
+        if (window.API) {
+            var [products, orders] = await Promise.all([
+                API.getProducts(),
+                API.getOrdersByUser(currentUser.username)
+            ]);
+            if (Array.isArray(products)) {
+                list_products = products;
+                setListProducts(products);
+            }
+            if (Array.isArray(orders)) {
+                currentUser.donhang = orders.map(function(order) {
+                    return {
+                        ma: order.ma,
+                        ngaymua: order.ngaymua,
+                        tinhTrang: order.tinhTrang,
+                        sp: (order.sp || []).map(function(item) {
+                            return {
+                                ma: item.ma,
+                                soluong: item.soluong,
+                                dongia: item.dongia,
+                                name: item.name,
+                                img: item.img,
+                                date: order.ngaymua
+                            };
+                        })
+                    };
+                });
+                setCurrentUser(currentUser);
+            }
+        }
+
         // cập nhật từ list user, do trong admin chỉ tác động tới listuser
         var listUser = getListUser();
         for (var u of listUser) {
@@ -255,7 +288,8 @@ function addDonHang(dh) {
         var masp = dh.sp[i].ma;
         var soluongSp = dh.sp[i].soluong;
         var p = timKiemTheoMa(list_products, masp);
-        var price = (p.promo.name == 'giareonline' ? p.promo.value : p.price);
+        if (!p) p = { name: dh.sp[i].name || masp, img: dh.sp[i].img || '', promo: {}, price: dh.sp[i].dongia || '0' };
+        var price = dh.sp[i].dongia || (p.promo && p.promo.name == 'giareonline' ? p.promo.value : p.price);
         var thoigian = new Date(dh.sp[i].date).toLocaleString();
         var thanhtien = stringToNum(price) * soluongSp;
 
@@ -277,18 +311,40 @@ function addDonHang(dh) {
                 </tr>
             `;
         totalPrice += thanhtien;
-        tongSanPhamTatCaDonHang += soluongSp;
     }
-    tongTienTatCaDonHang += totalPrice;
+    if (dh.tinhTrang !== 'Đã hủy') {
+        tongTienTatCaDonHang += totalPrice;
+        tongSanPhamTatCaDonHang += dh.sp.reduce(function(total, item) {
+            return total + (Number(item.soluong) || 0);
+        }, 0);
+    }
 
     s += `
                 <tr style="font-weight:bold; text-align:center; height: 4em;">
                     <td colspan="4">TỔNG TIỀN: </td>
                     <td class="alignRight">` + numToString(totalPrice) + ` ₫</td>
-                    <td > ` + dh.tinhTrang + ` </td>
+                        <td>` + dh.tinhTrang + (dh.tinhTrang === 'Đang chờ xử lý' ? `<br><button onclick="huyDonDatHang('` + dh.ma + `')">Hủy đơn</button>` : '') + `</td>
                 </tr>
             </table>
             <hr>
         `;
     div.innerHTML += s;
+}
+
+async function huyDonDatHang(maDon) {
+    if (!window.API || !window.confirm('Bạn muốn hủy đơn hàng này?')) return;
+    var response = await API.updateOrderStatus(maDon, 'Đã hủy', currentUser.username);
+    if (!response || !response.success) {
+        alert(response && response.message ? response.message : 'Không thể cập nhật đơn hàng trong database.');
+        return;
+    }
+    var order = currentUser.donhang.find(function(item) { return item.ma === maDon; });
+    if (order) order.tinhTrang = 'Đã hủy';
+    setCurrentUser(currentUser);
+    var list = document.getElementsByClassName('listDonHang')[0];
+    list.innerHTML = '';
+    tongTienTatCaDonHang = 0;
+    tongSanPhamTatCaDonHang = 0;
+    addTatCaDonHang(currentUser);
+    addInfoUser(currentUser);
 }

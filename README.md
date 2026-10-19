@@ -24,6 +24,14 @@ Chức năng **ADMIN**:
 + username: admin
 + password: adadad
 
+## Chạy trang quản trị với SQL Server
+
+- Tạo database lần đầu bằng `backend/sql/setup_database.sql` trong SQL Server Management Studio. Không chạy lại script này trên database đang có dữ liệu vì script tạo lại các bảng.
+- Nếu database đã được tạo trước đó, chạy `backend/sql/admin_migration.sql` một lần để cho phép lưu ảnh sản phẩm tải lên từ trang quản trị.
+- Cấu hình kết nối SQL Server trong `backend/.env` (`DB_SERVER`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, và `DB_PORT` hoặc `DB_INSTANCE`).
+- Chạy backend bằng `cd backend`, `npm install`, rồi `npm start`; mở trang qua `http://localhost:5000/admin.html` và đăng nhập bằng tài khoản admin ở trên.
+- Sản phẩm, đơn hàng và khách hàng trên trang admin được đọc/ghi qua backend vào SQL Server. Đơn hàng được tạo khi khách thanh toán; đơn chờ xử lý có thể được khách hủy trong trang tài khoản hoặc được admin duyệt/hủy. Sản phẩm đã nằm trong đơn hàng không thể xóa để giữ lịch sử đơn hàng.
+
 ## Screenshots
 
 ### Cơ bản

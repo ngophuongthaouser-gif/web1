@@ -1,6 +1,13 @@
 var currentuser; // user hiện tại, biến toàn cục
-window.onload = function () {
+window.onload = async function () {
     khoiTao();
+	if (window.API) {
+		var products = await API.getProducts();
+		if (Array.isArray(products)) {
+			list_products = products;
+			setListProducts(products);
+		}
+	}
 
 	// autocomplete cho khung tim kiem
 	autocomplete(document.getElementById('search-box'), list_products);
@@ -59,6 +66,10 @@ function addProductToTable(user) {
 		var masp = user.products[i].ma;
 		var soluongSp = user.products[i].soluong;
 		var p = timKiemTheoMa(list_products, masp);
+		if (!p) {
+			s += `<tr><td>` + (i + 1) + `</td><td>Sản phẩm ` + masp + ` không còn bán</td><td colspan="4">Vui lòng xóa sản phẩm này khỏi giỏ hàng</td><td class="noPadding"><i class="fa fa-trash" onclick="xoaSanPhamTrongGioHang(` + i + `)"></i></td></tr>`;
+			continue;
+		}
 		var price = (p.promo.name == 'giareonline' ? p.promo.value : p.price);
 		var thoigian = new Date(user.products[i].date).toLocaleString();
 		var thanhtien = stringToNum(price) * soluongSp;
@@ -107,7 +118,7 @@ function xoaSanPhamTrongGioHang(i) {
 	}
 }
 
-function thanhToan() {
+async function thanhToan() {
 	var c_user = getCurrentUser();
 	if(c_user.off) {
         alert('Tài khoản của bạn hiện đang bị khóa nên không thể mua hàng!');
@@ -120,6 +131,46 @@ function thanhToan() {
 		return;
 	}
 	if (window.confirm('Thanh toán giỏ hàng ?')) {
+		if (window.API) {
+			var orderProducts = currentuser.products.map(function(item) {
+				var product = timKiemTheoMa(list_products, item.ma);
+				if (!product) return null;
+				var price = product.promo && product.promo.name === 'giareonline' ? product.promo.value : product.price;
+				return {
+					ma: item.ma,
+					soluong: item.soluong,
+					dongia: price
+				};
+			});
+			if (orderProducts.some(function(item) { return !item; })) {
+				alert('Có sản phẩm không còn trong danh mục. Hãy tải lại trang và thử lại.');
+				return;
+			}
+			var total = orderProducts.reduce(function(sum, item) {
+				return sum + stringToNum(item.dongia) * item.soluong;
+			}, 0);
+			var response = await API.createOrder({
+				username: currentuser.username,
+				sp: orderProducts,
+				tongtien: numToString(total)
+			});
+			if (!response || !response.success) {
+				alert(response && response.message ? response.message : 'Không lưu được đơn hàng vào database. Giỏ hàng của bạn vẫn được giữ nguyên.');
+				return;
+			}
+			currentuser.donhang = currentuser.donhang || [];
+			currentuser.donhang.push({
+				ma: response.maDon,
+				sp: currentuser.products,
+				ngaymua: new Date(),
+				tinhTrang: 'Đang chờ xử lý'
+			});
+			currentuser.products = [];
+			capNhatMoiThu();
+			addAlertBox('Đơn hàng đã được lưu và đang chờ xử lý.', '#17c671', '#fff', 4000);
+			return;
+		}
+
 		currentuser.donhang.push({
 			"sp": currentuser.products,
 			"ngaymua": new Date(),

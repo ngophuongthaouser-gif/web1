@@ -4,13 +4,12 @@ const { sql, getPool } = require('../config/db');
 exports.getAllUsers = async (req, res) => {
     try {
         const pool = await getPool();
-        const result = await pool.request().query('SELECT Id, Username, Password, Ho, Ten, Email, IsLocked, CreatedAt FROM Users ORDER BY Id DESC');
+        const result = await pool.request().query('SELECT Id, Username, Ho, Ten, Email, IsLocked, CreatedAt FROM Users ORDER BY Id DESC');
         
-        // Định dạng trả về giống Frontend: username, pass, ho, ten, email, off (IsLocked)
+        // Định dạng trả về cho trang quản trị, không gửi mật khẩu ra trình duyệt.
         const users = result.recordset.map(u => ({
             id: u.Id,
             username: u.Username,
-            pass: u.Password,
             ho: u.Ho || '',
             ten: u.Ten || '',
             email: u.Email || '',
@@ -100,9 +99,19 @@ exports.deleteUser = async (req, res) => {
         const { username } = req.params;
         const pool = await getPool();
 
-        await pool.request()
-            .input('username', sql.NVarChar, username)
-            .query('DELETE FROM Users WHERE Username = @username');
+        const transaction = new sql.Transaction(pool);
+        await transaction.begin();
+        try {
+            const request = new sql.Request(transaction);
+            await request
+                .input('username', sql.NVarChar, username)
+                .query(`DELETE FROM Orders WHERE Username = @username;
+                        DELETE FROM Users WHERE Username = @username;`);
+            await transaction.commit();
+        } catch (err) {
+            await transaction.rollback();
+            throw err;
+        }
 
         return res.json({ success: true, message: 'Xoá người dùng thành công!' });
     } catch (err) {
