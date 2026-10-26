@@ -1,11 +1,10 @@
 /* Plc */
 .plc {
-	background: #dae2dc;
-	/* overflow: hidden; */
+	background: linear-gradient(90deg, #e8eaf6 0%, #f3f4fc 100%);
 	font-size: 15px;
-	color: #333;
-	border-top: 1px solid #bbb;
-	border-bottom: 1px solid #bbb;
+	color: #3949ab;
+	border-top: 2px solid #c5cae9;
+	border-bottom: 2px solid #c5cae9;
 }
 
 .plc ul {
@@ -16,10 +15,11 @@
 	width: 20%;
 	display: inline-block;
 	box-sizing: border-box;
-	padding: 5px 10px;
+	padding: 8px 10px;
 	line-height: 20px;
-	border-right: solid 1px #bbb;
+	border-right: solid 1px #c5cae9;
 	margin: 5px 0;
+	font-weight: 500;
 }
 
 .plc li:last-child {
@@ -29,24 +29,23 @@
 /* ============= Footer ============= */
 .footer {
 	position: relative;
-	/* height: 40px; */
 	width: 100%;
-	background: #476;
+	background: linear-gradient(135deg, #1a237e 0%, #283593 60%, #0d47a1 100%);
+	padding: 30px 0 0 0;
 }
 
 .copy-right {
-	/* position: absolute; */
-	/* bottom: 0; */
 	width: 100%;
 	text-align: center;
 	line-height: 40px;
 	font-size: 14px;
-	color: #ccc;
-	background-color: #252525;
+	color: #9fa8da;
+	background-color: #0d0d2b;
+	margin-top: 20px;
 }
 
 .copy-right a {
-	color: #ccc;
+	color: #7986cb;
 	transition: .2s ease;
 }
 

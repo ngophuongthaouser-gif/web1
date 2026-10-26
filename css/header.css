@@ -4,9 +4,10 @@
 		position: -webkit-sticky; /* Safari */
 		top: 0;
 		z-index: 12;
-		background-color: white;
-		padding: 15px 0 5px 0 ;
-		border-bottom: 3px solid #e1e1e1;
+		background-color: #ffffff;
+		padding: 12px 0 8px 0;
+		border-bottom: 3px solid #1a237e;
+		box-shadow: 0 2px 12px rgba(26, 35, 126, 0.12);
 	}
 
 	/* Logo */
@@ -14,7 +15,7 @@
 			width: 250px;
 			height: 60px;
 			float: left;
-			transition-duration: .1s;
+			transition-duration: .2s;
 		}
 		.header .logo:hover {
 			transform: scale(1.05)
@@ -40,20 +41,27 @@
 
 			form.input-search {
 				margin-left: 20px;
-				background: #ddd;
-				border: 2px solid #bbb;
-				border-radius: 10px;
-				height: 35px;
-				width: 300px;
-				/* điều chỉnh width của ô tìm kiếm trên header ở đây */
+				background: #f0f2ff;
+				border: 2px solid #c5cae9;
+				border-radius: 25px;
+				height: 38px;
+				width: 320px;
+				transition: border-color .2s;
+			}
+			form.input-search:focus-within {
+				border-color: #1a237e;
+				background: #fff;
+				box-shadow: 0 0 0 3px rgba(26, 35, 126, 0.1);
 			}
 			.input-search input {
 				float: left;
-				padding-left: 15px;
+				padding-left: 18px;
 				border: none;
-				border-radius: 10px 0 0 10px;
+				border-radius: 25px 0 0 25px;
+				background: transparent;
 				height: 100%;
 				width: calc(100% - 100px - 20px);
+				color: #212121;
 				/* 100 la width button, 20 la padding button */
 			}
 			.input-search button {
@@ -61,7 +69,7 @@
 				font-size: 14px;
 				font-weight: bold;
 				padding: 0 10px;
-				color: #888;
+				color: #1a237e;
 				background: none;
 				width: 100px;
 				height: 100%;
@@ -72,7 +80,7 @@
 				        transition-duration: .3s;
 			}
 			.input-search button:hover {
-				color: #000;
+				color: #FF6F00;
 			}
 
 			.tags {
@@ -80,11 +88,11 @@
 				font-size: 13px;
 			}
 			.tags a {
-				color: gray;
+				color: #7986cb;
 				padding: 0 5px;
 			}
 			.tags a:hover {
-				color: black;
+				color: #1a237e;
 				text-decoration: underline;
 			}
 
@@ -96,7 +104,7 @@
 				}
 				.autocomplete-items {
 					position: absolute;
-					border: 1px solid #d4d4d4;
+					border: 1px solid #c5cae9;
 					border-bottom: none;
 					border-top: none;
 					z-index: 99;
@@ -104,20 +112,24 @@
 					top: 100%;
 					left: 0;
 					right: 0;
+					border-radius: 0 0 12px 12px;
+					overflow: hidden;
+					box-shadow: 0 8px 20px rgba(26, 35, 126, 0.12);
 				}
 				.autocomplete-items div {
 					padding: 10px;
 					cursor: pointer;
 					background-color: #fff; 
-					border-bottom: 1px solid #d4d4d4; 
+					border-bottom: 1px solid #e8eaf6; 
 				}
 				.autocomplete-items div:hover {
 					/*when hovering an item:*/
-					background-color: #e9e9e9; 
+					background-color: #e8eaf6; 
+					color: #1a237e;
 				}
 				.autocomplete-active {
 					/*when navigating through the items using the arrow keys:*/
-					background-color: DodgerBlue !important; 
+					background-color: #1a237e !important; 
 					color: #ffffff; 
 				}
 			/* End auto complete */
@@ -137,21 +149,21 @@
 				text-align: center;
 				font-size: 16px;
 				font-weight: bold;
-				color: #565;
+				color: #1a237e;
 				cursor: pointer;
 			}
 			.tools-member a:hover > i {
-				border: 1px solid #fff;
-				background-color: rgb(161, 161, 161);
+				border: 1px solid #1a237e;
+				background-color: #1a237e;
 				color: #fff;
 			}
 
 			.tools-member i { /* icon */
 				padding: 10px;
 				border-radius: 50%;
-				border: 1px solid #ccc;
-				background-color: #fff;
-				color: #000;
+				border: 1px solid #c5cae9;
+				background-color: #f0f2ff;
+				color: #1a237e;
 				-webkit-transition: 0.2s;
 				-o-transition: 0.2s;
 				transition: 0.2s;
@@ -176,19 +188,23 @@
 					position: absolute;
 					left: 0;
 					text-align: center;
-					border-radius: 5px;
-					background-color: #eee;
+					border-radius: 12px;
+					background-color: #fff;
+					box-shadow: 0 8px 25px rgba(26, 35, 126, 0.18);
 					min-width: 170px;
 					transition-duration: .15s;
 					transform: translateX(-40%) scale(0);
+					border: 1px solid #e8eaf6;
+					overflow: hidden;
 				}
 				.member .menuMember a {
 					display: block;
-					padding: 10px 0;
+					padding: 12px 0;
+					color: #212121;
 				}
 				.member .menuMember a:hover {
-					background-color: #888;
-					color: #eee;
+					background-color: #1a237e;
+					color: #fff;
 				}
 				.member .hide {
 					display: none;
@@ -209,7 +225,7 @@
 					bottom: -1em;
 					font-weight: bold;
 					font-size: 1em;
-					color: red;
+					color: #FF6F00;
 					border-radius: 50%;
 					width: 2em;
 					height: 2em;

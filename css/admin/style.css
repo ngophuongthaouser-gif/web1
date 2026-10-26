@@ -1,8 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 * {
     margin: 0;
     padding: 0;
     outline: none;
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: 'Inter', Arial, Helvetica, sans-serif;
 }
 
 body,
@@ -31,7 +33,7 @@ header {
     width: 100%;
     /* position: sticky; */
     padding: 20px 10px;
-    background-color: #f39c12;
+    background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
     border-bottom: 1px solid #d68910;
 }
 
@@ -75,7 +77,7 @@ header h2 {
 
 .sidebar .nav-link.active,
 .sidebar .nav-link.active i {
-    background-color: #f39c12;
+    background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
     color: #fff;
 }
 
@@ -287,6 +289,9 @@ header h2 {
     margin: 50px auto;
     width: auto;
     background-color: #fffde7;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
 }
 
 .overlayTable td:first-child {

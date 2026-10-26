@@ -4,15 +4,17 @@
 
 .companyMenu a {
     border: 2px solid #fff;
-    height: 40px;
-    line-height: 40px;
+    height: 44px;
+    line-height: 44px;
     transition-duration: .2s;
+    border-radius: 8px;
 }
 
 .companyMenu a:hover {
-	border: 2px solid #aaa;
+	border: 2px solid #1a237e;
 	transform: scale(1.1);
 	z-index: 20;
+	box-shadow: 0 4px 12px rgba(26, 35, 126, 0.15);
 }
 
 .companyMenu a img{
@@ -23,15 +25,16 @@
 
 /* Dropdown From w3 */
 	.dropbtn {
-	    background-color: #444;
+	    background: linear-gradient(135deg, #1a237e, #3949ab);
 	    color: white;
-	    padding: 10px 14px;
+	    padding: 10px 18px;
 	    font-size: 15px;
 	    border: none;
-	    border-radius: 5px;
+	    border-radius: 25px;
 	    cursor: pointer;
 		margin-bottom: 5px;
 		transition-duration: .3s;
+		box-shadow: 0 2px 8px rgba(26, 35, 126, 0.2);
 	}
 	.dropbtn:after {
 		/* kí tự mũi tên > */
@@ -49,29 +52,33 @@
 	    z-index: 1;
 	    position: absolute;
 	    min-width: 170px;
-	    border-radius: 5px;
-	    background-color: rgba(255, 255, 255, .8);
-		box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.5);
+	    border-radius: 12px;
+	    background-color: #ffffff;
+		box-shadow: 0px 8px 25px 0px rgba(26, 35, 126, 0.2);
 		/* mặc địng là xoay 90 độ => bị ẩn đi */
 	    transform: rotateX(90deg);
 	    transition-duration: .3s;
+	    border: 1px solid #e8eaf6;
+	    overflow: hidden;
 	}
 	.dropdown-content a {
-	    color: #444;
+	    color: #3949ab;
 	    padding: 12px 16px;
 	    text-decoration: none;
 	    display: block;
+	    transition: .2s;
 	}
 	.dropdown-content a:hover { 
 		color: white;
-		background-color: #555 
+		background: linear-gradient(90deg, #1a237e, #3949ab);
 	}
 	.dropdown:hover .dropdown-content {
 	    /* khi hover vào thì cần hiện content ra => xoay 0 độ => trờ về như cũ */
 	    transform: rotateY(0deg);
 	}
 	.dropdown:hover .dropbtn {
-	    background-color: #3e8e41;
+	    background: linear-gradient(135deg, #FF6F00, #FF8F00);
+	    box-shadow: 0 4px 12px rgba(255, 111, 0, 0.35);
 	}
 /* ============== End From W3 ============== */
 
@@ -79,35 +86,38 @@
 .filterName {
 	margin: 15px auto;
 	text-align: center;
-	/* width: 195px; */
 }
 .filterName input {
-	padding: 0 15px;
-	/* width: calc(100% - 30px); 15px la padding left cua input */
-	height: 30px;
-	border: 2px solid #bbb;
-	border-radius: 10px;
+	padding: 0 18px;
+	height: 38px;
+	border: 2px solid #c5cae9;
+	border-radius: 25px;
 	font-size: 15px;
 	-webkit-transition-duration: .3s;
      -o-transition-duration: .3s;
         transition-duration: .3s;
+	background: #f0f2ff;
+	color: #212121;
 }
 .filterName input:focus {
-	border: 2px solid orange;
+	border: 2px solid #1a237e;
+	background: #fff;
+	box-shadow: 0 0 0 3px rgba(26, 35, 126, 0.1);
+	outline: none;
 } 
 
 /* Choosed filter */
 .choosedFilter { margin: 10px auto; }
 .choosedFilter i { transition-duration: .3s; }
-.choosedFilter a:hover > h3 > i { color: red; }
-/* .choosedFilter a:hover > h3 { text-decoration: line-through; } */
+.choosedFilter a:hover > h3 > i { color: #FF6F00; }
 .choosedFilter a {
     font-size: 12px;
-    padding: 6px;
+    padding: 6px 12px;
     color: #fff;
-    background: #288ad6;
-    border-radius: 4px;
+    background: linear-gradient(135deg, #1a237e, #3949ab);
+    border-radius: 20px;
     margin-right: 5px;
+    box-shadow: 0 2px 6px rgba(26, 35, 126, 0.25);
 }
 
 /* Các khung sản phẩm */
@@ -118,9 +128,10 @@
 .khungSanPham {
 	width: 100%;
 	margin: 50px 0;
-	border-radius: 5px;
-	border: 2px solid #ff4d00; 
-	box-sizing: border-box; /* dùng để width ko vượt ra ngoài khi có border */
+	border-radius: 12px;
+	border: 2px solid #1a237e; 
+	box-sizing: border-box;
+	box-shadow: 0 4px 20px rgba(26, 35, 126, 0.08);
 }
 
 .khungSanPham h3.tenKhung {
@@ -128,9 +139,12 @@
 	font-size: 1.5em;
 	text-align: center;
 	margin: 0 auto;
-	border-radius: 1em;
+	border-radius: 2em;
 	color: white;
 	transform: translateY(-0.75em);
+	background: linear-gradient(135deg, #1a237e 0%, #2196F3 100%);
+	padding: 0 20px;
+	box-shadow: 0 4px 15px rgba(26, 35, 126, 0.3);
 }
 
 .khungSanPham li {
@@ -142,16 +156,17 @@
 	display: block;
 	font-weight: bold;
 	text-align: center;
-	/* max-width: 25%; */
 	margin:	0 auto;
-	padding: .5em 1em;
-	border-radius: 1em;
-	color: #888;
-	background-color: #eee;
+	padding: .5em 2em;
+	border-radius: 25px;
+	color: #1a237e;
+	background-color: #e8eaf6;
+	border: 2px solid #1a237e;
 	transition-duration: .2s;
 	transform: translateY(1em);
 }
 .xemTatCa:hover {
-	background-color: #ccc;
-	color: #000;
+	background: linear-gradient(135deg, #1a237e, #3949ab);
+	color: #fff;
+	box-shadow: 0 4px 15px rgba(26, 35, 126, 0.3);
 }
