@@ -149,10 +149,18 @@ async function thanhToan() {
 			var total = orderProducts.reduce(function(sum, item) {
 				return sum + stringToNum(item.dongia) * item.soluong;
 			}, 0);
+			var defaultName = (currentuser.ho ? currentuser.ho + ' ' : '') + (currentuser.ten || currentuser.username);
+			var hoTen = window.prompt('Nhập họ tên người nhận hàng:', defaultName) || defaultName;
+			var sdt = window.prompt('Nhập số điện thoại nhận hàng:', '0912345678') || '0912345678';
+			var diaChi = window.prompt('Nhập địa chỉ nhận hàng chi tiết:', '280 An Dương Vương, Phường 4, Quận 5, TP.HCM') || '280 An Dương Vương, Phường 4, Quận 5, TP.HCM';
+
 			var response = await API.createOrder({
 				username: currentuser.username,
 				sp: orderProducts,
-				tongtien: numToString(total)
+				tongtien: numToString(total),
+				diaChi: diaChi,
+				sdt: sdt,
+				hoTenNguoiNhan: hoTen
 			});
 			if (!response || !response.success) {
 				alert(response && response.message ? response.message : 'Không lưu được đơn hàng vào database. Giỏ hàng của bạn vẫn được giữ nguyên.');

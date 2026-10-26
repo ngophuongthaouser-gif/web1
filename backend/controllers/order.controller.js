@@ -1,12 +1,18 @@
 const { sql, getPool } = require('../config/db');
 
-// Lấy tất cả đơn hàng (cho Admin)
+// Lấy tất cả đơn hàng (cho Admin) - kèm thông tin user
 exports.getAllOrders = async (req, res) => {
     try {
         const pool = await getPool();
-        const ordersResult = await pool.request().query('SELECT * FROM Orders ORDER BY NgayMua DESC');
+        const ordersResult = await pool.request().query(`
+            SELECT o.*, u.Ho, u.Ten, u.Email
+            FROM Orders o
+            LEFT JOIN Users u ON o.Username = u.Username
+            ORDER BY o.NgayMua DESC
+        `);
         const detailsResult = await pool.request().query(`
-            SELECT od.Id, od.MaDon, od.MaSP, od.SoLuong, od.DonGia, p.Name, p.Company, p.Price, p.Img
+            SELECT od.Id, od.MaDon, od.MaSP, od.SoLuong, od.DonGia,
+                   p.Name, p.Company, p.Price, p.Img
             FROM OrderDetails od
             LEFT JOIN Products p ON od.MaSP = p.MaSP
         `);
@@ -27,6 +33,10 @@ exports.getAllOrders = async (req, res) => {
         const orders = ordersResult.recordset.map(o => ({
             ma: o.MaDon,
             khach: o.Username,
+            hoTen: o.HoTenNguoiNhan || ((o.Ho || '') + ' ' + (o.Ten || '')).trim() || o.Username,
+            email: o.Email || '',
+            sdt: o.SDT || '',
+            diaChi: o.DiaChi || '',
             ngaygio: o.NgayMua ? new Date(o.NgayMua).toLocaleString('vi-VN') : '',
             ngaymua: o.NgayMua,
             tongtien: o.TongTien,
@@ -49,13 +59,24 @@ exports.getOrdersByUser = async (req, res) => {
 
         const ordersResult = await pool.request()
             .input('username', sql.NVarChar, username)
-            .query('SELECT * FROM Orders WHERE Username = @username ORDER BY NgayMua DESC');
+            .query(`
+                SELECT o.*, u.Ho, u.Ten, u.Email
+                FROM Orders o
+                LEFT JOIN Users u ON o.Username = u.Username
+                WHERE o.Username = @username
+                ORDER BY o.NgayMua DESC
+            `);
 
-        const detailsResult = await pool.request().query(`
-            SELECT od.Id, od.MaDon, od.MaSP, od.SoLuong, od.DonGia, p.Name, p.Company, p.Price, p.Img
-            FROM OrderDetails od
-            LEFT JOIN Products p ON od.MaSP = p.MaSP
-        `);
+        const detailsResult = await pool.request()
+            .input('username', sql.NVarChar, username)
+            .query(`
+                SELECT od.Id, od.MaDon, od.MaSP, od.SoLuong, od.DonGia,
+                       p.Name, p.Company, p.Price, p.Img
+                FROM OrderDetails od
+                INNER JOIN Orders o ON od.MaDon = o.MaDon
+                LEFT JOIN Products p ON od.MaSP = p.MaSP
+                WHERE o.Username = @username
+            `);
 
         const detailsByOrder = {};
         for (const item of detailsResult.recordset) {
@@ -73,6 +94,10 @@ exports.getOrdersByUser = async (req, res) => {
         const orders = ordersResult.recordset.map(o => ({
             ma: o.MaDon,
             khach: o.Username,
+            hoTen: o.HoTenNguoiNhan || ((o.Ho || '') + ' ' + (o.Ten || '')).trim() || o.Username,
+            email: o.Email || '',
+            sdt: o.SDT || '',
+            diaChi: o.DiaChi || '',
             ngaygio: o.NgayMua ? new Date(o.NgayMua).toLocaleString('vi-VN') : '',
             ngaymua: o.NgayMua,
             tongtien: o.TongTien,
@@ -87,10 +112,10 @@ exports.getOrdersByUser = async (req, res) => {
     }
 };
 
-// Tạo đơn hàng mới
+// Tạo đơn hàng mới (kèm địa chỉ giao hàng)
 exports.createOrder = async (req, res) => {
     try {
-        const { username, sp, tongtien } = req.body;
+        const { username, sp, tongtien, diaChi, sdt, hoTenNguoiNhan } = req.body;
         if (!username || !sp || !Array.isArray(sp) || sp.length === 0) {
             return res.status(400).json({ success: false, message: 'Thông tin đơn hàng không hợp lệ!' });
         }
@@ -105,8 +130,11 @@ exports.createOrder = async (req, res) => {
                 .input('username', sql.NVarChar, username)
                 .input('tongtien', sql.NVarChar, tongtien || '0')
                 .input('tinhtrang', sql.NVarChar, 'Đang chờ xử lý')
-                .query(`INSERT INTO Orders (MaDon, Username, NgayMua, TongTien, TinhTrang)
-                        VALUES (@madon, @username, GETDATE(), @tongtien, @tinhtrang)`);
+                .input('diachi', sql.NVarChar, diaChi || '')
+                .input('sdt', sql.NVarChar, sdt || '')
+                .input('hoTenNguoiNhan', sql.NVarChar, hoTenNguoiNhan || '')
+                .query(`INSERT INTO Orders (MaDon, Username, NgayMua, TongTien, TinhTrang, DiaChi, SDT, HoTenNguoiNhan)
+                        VALUES (@madon, @username, GETDATE(), @tongtien, @tinhtrang, @diachi, @sdt, @hoTenNguoiNhan)`);
 
             for (const item of sp) {
                 const quantity = Number(item.soluong) || 1;
@@ -136,13 +164,14 @@ exports.createOrder = async (req, res) => {
     }
 };
 
-// Cập nhật trạng thái đơn hàng (Duyệt / Huỷ)
+// Cập nhật trạng thái đơn hàng (Admin: Duyệt / Huỷ / Đang giao)
 exports.updateOrderStatus = async (req, res) => {
     try {
         const { id } = req.params;
         const { tinhTrang, username } = req.body;
 
-        if (!['Đã giao hàng', 'Đã hủy'].includes(tinhTrang)) {
+        const validStatuses = ['Đang giao hàng', 'Đã giao hàng', 'Đã hủy', 'Đang chờ xử lý'];
+        if (!validStatuses.includes(tinhTrang)) {
             return res.status(400).json({ success: false, message: 'Trạng thái đơn hàng không hợp lệ!' });
         }
         if (username && tinhTrang !== 'Đã hủy') {
@@ -155,8 +184,9 @@ exports.updateOrderStatus = async (req, res) => {
             .input('tinhtrang', sql.NVarChar, tinhTrang)
             .input('username', sql.NVarChar, username || null)
             .query(`UPDATE Orders SET TinhTrang = @tinhtrang
-                    WHERE MaDon = @madon AND TinhTrang = N'Đang chờ xử lý'
-                      AND (@username IS NULL OR Username = @username)`);
+                    WHERE MaDon = @madon
+                      AND (@username IS NULL OR Username = @username)
+                      AND (@username IS NULL OR TinhTrang = N'Đang chờ xử lý')`);
 
         if (result.rowsAffected[0] === 0) {
             const exists = await pool.request()
@@ -164,7 +194,7 @@ exports.updateOrderStatus = async (req, res) => {
                 .input('username', sql.NVarChar, username || null)
                 .query('SELECT TinhTrang FROM Orders WHERE MaDon = @madon AND (@username IS NULL OR Username = @username)');
             if (exists.recordset.length === 0) {
-                return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng phù hợp với tài khoản này!' });
+                return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng!' });
             }
             return res.status(409).json({
                 success: false,
@@ -172,7 +202,7 @@ exports.updateOrderStatus = async (req, res) => {
             });
         }
 
-        return res.json({ success: true, message: 'Cập nhật trạng thái đơn hàng thành công!' });
+        return res.json({ success: true, message: 'Cập nhật trạng thái thành công!' });
     } catch (err) {
         console.error('Lỗi updateOrderStatus:', err);
         return res.status(500).json({ success: false, message: 'Lỗi máy chủ: ' + err.message });

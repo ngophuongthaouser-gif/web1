@@ -63,7 +63,10 @@ CREATE TABLE Orders (
     Username NVARCHAR(50) NOT NULL,
     NgayMua DATETIME DEFAULT GETDATE(),
     TongTien NVARCHAR(50),
-    TinhTrang NVARCHAR(100) DEFAULT N'Đang chờ xử lý'
+    TinhTrang NVARCHAR(100) DEFAULT N'Đang chờ xử lý',
+    DiaChi NVARCHAR(500) NULL,
+    SDT NVARCHAR(20) NULL,
+    HoTenNguoiNhan NVARCHAR(200) NULL
 );
 
 -- 5. Bảng OrderDetails (Chi tiết đơn hàng)

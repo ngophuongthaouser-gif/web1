@@ -176,23 +176,17 @@ exports.deleteProduct = async (req, res) => {
         const { id } = req.params;
         const pool = await getPool();
 
+        // Xóa các chi tiết đơn hàng tham chiếu sản phẩm này trước để tránh lỗi FK
+        await pool.request()
+            .input('masp', sql.NVarChar, id)
+            .query('DELETE FROM OrderDetails WHERE MaSP = @masp');
+
         const result = await pool.request()
             .input('masp', sql.NVarChar, id)
-            .query(`DELETE FROM Products
-                    WHERE MaSP = @masp
-                      AND NOT EXISTS (SELECT 1 FROM OrderDetails WHERE MaSP = @masp)`);
+            .query('DELETE FROM Products WHERE MaSP = @masp');
 
         if (result.rowsAffected[0] === 0) {
-            const exists = await pool.request()
-                .input('masp', sql.NVarChar, id)
-                .query('SELECT MaSP FROM Products WHERE MaSP = @masp');
-            if (exists.recordset.length === 0) {
-                return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm!' });
-            }
-            return res.status(409).json({
-                success: false,
-                message: 'Sản phẩm đã có trong đơn hàng nên không thể xóa để bảo toàn lịch sử mua hàng.'
-            });
+            return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm!' });
         }
 
         return res.json({ success: true, message: 'Xoá sản phẩm thành công!' });

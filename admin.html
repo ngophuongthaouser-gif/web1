@@ -9,9 +9,8 @@
     <title>Admin - Thế giới điện thoại</title>
     <link rel="shortcut icon" href="img/favicon.ico" />
 
-    <!-- Load font awesome icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
-        crossorigin="anonymous">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" crossorigin="anonymous">
 
     <!-- Chart JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
@@ -28,260 +27,224 @@
 </head>
 
 <body>
+    <!-- Header cố định -->
     <header>
-        <h2>SmartPhone Store - Admin</h2>
+        <h2>SmartPhone Store Admin Dashboard</h2>
     </header>
 
-    <!-- Menu -->
+    <!-- Sidebar -->
     <aside class="sidebar">
         <ul class="nav">
-            <li class="nav-title">MENU</li>
+            <li class="nav-title">Tổng quan</li>
             <li class="nav-item"><a class="nav-link active"><i class="fa fa-home"></i> Trang Chủ</a></li>
+
+            <li class="nav-title">Quản lý</li>
             <li class="nav-item"><a class="nav-link"><i class="fa fa-th-large"></i> Sản Phẩm</a></li>
             <li class="nav-item"><a class="nav-link"><i class="fa fa-file-text-o"></i> Đơn Hàng</a></li>
-            <li class="nav-item"><a class="nav-link"><i class="fa fa-address-book-o"></i> Khách Hàng</a></li>
-            <li class="nav-item">
-                <hr>
-            </li>
+            <li class="nav-item"><a class="nav-link"><i class="fa fa-users"></i> Khách Hàng</a></li>
+
+            <li class="nav-title">Hệ thống</li>
             <li class="nav-item">
                 <a href="index.html" class="nav-link" onclick="logOutAdmin(); return true;">
-                    <i class="fa fa-arrow-left"></i>
-                    Đăng xuất (về Trang chủ)
+                    <i class="fa fa-sign-out"></i> Đăng xuất
                 </a>
             </li>
         </ul>
     </aside>
 
-    <!-- Khung hiển thị chính -->
+    <!-- Nội dung chính -->
     <div class="main">
+
+        <!-- ========== TRANG CHỦ / THỐNG KÊ ========== -->
         <div class="home">
-            <div class="canvasContainer">
-                <canvas id="myChart1"></canvas>
-            </div>
-
-            <div class="canvasContainer">
-                <canvas id="myChart2"></canvas>
-            </div>
-
-            <div class="canvasContainer">
-                <canvas id="myChart3"></canvas>
-            </div>
-
-            <div class="canvasContainer">
-                <canvas id="myChart4"></canvas>
+            <div id="statCards" class="stat-cards"></div>
+            <div class="flexContain">
+                <div class="canvasContainer"><canvas id="myChart1"></canvas></div>
+                <div class="canvasContainer"><canvas id="myChart2"></canvas></div>
+                <div class="canvasContainer"><canvas id="myChart3"></canvas></div>
+                <div class="canvasContainer"><canvas id="myChart4"></canvas></div>
             </div>
         </div>
 
-        <!-- Sản Phẩm -->
+        <!-- ========== SẢN PHẨM ========== -->
         <div class="sanpham">
-            <table class="table-header">
-                <tr>
-                    <!-- Theo độ rộng của table content -->
-                    <th title="Sắp xếp" style="width: 5%" onclick="sortProductsTable('stt')">Stt <i class="fa fa-sort"></i></th>
-                    <th title="Sắp xếp" style="width: 10%" onclick="sortProductsTable('masp')">Mã <i class="fa fa-sort"></i></th>
-                    <th title="Sắp xếp" style="width: 40%" onclick="sortProductsTable('ten')">Tên <i class="fa fa-sort"></i></th>
-                    <th title="Sắp xếp" style="width: 15%" onclick="sortProductsTable('gia')">Giá <i class="fa fa-sort"></i></th>
-                    <th title="Sắp xếp" style="width: 15%" onclick="sortProductsTable('khuyenmai')">Khuyến mãi <i class="fa fa-sort"></i></th>
-                    <th style="width: 15%">Hành động</th>
-                </tr>
-            </table>
-
-            <div class="table-content">
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3><i class="fa fa-th-large" style="color:var(--accent)"></i> &nbsp;Danh sách sản phẩm</h3>
+                </div>
+                <table class="table-header">
+                    <tr>
+                        <th style="width:5%" onclick="sortProductsTable('stt')">Stt <i class="fa fa-sort"></i></th>
+                        <th style="width:10%" onclick="sortProductsTable('masp')">Mã <i class="fa fa-sort"></i></th>
+                        <th style="width:38%" onclick="sortProductsTable('ten')">Tên sản phẩm <i class="fa fa-sort"></i></th>
+                        <th style="width:14%" onclick="sortProductsTable('gia')">Giá <i class="fa fa-sort"></i></th>
+                        <th style="width:18%" onclick="sortProductsTable('khuyenmai')">Khuyến mãi <i class="fa fa-sort"></i></th>
+                        <th style="width:15%; text-align:center">Hành động</th>
+                    </tr>
+                </table>
+                <div class="table-content"></div>
+                <div class="table-footer">
+                    <select name="kieuTimSanPham">
+                        <option value="ma">Tìm theo mã</option>
+                        <option value="ten">Tìm theo tên</option>
+                    </select>
+                    <input type="text" placeholder="🔍 Tìm kiếm sản phẩm..." onkeyup="timKiemSanPham(this)" style="width:220px">
+                    <button onclick="document.getElementById('khungThemSanPham').style.transform='scale(1)'; autoMaSanPham()">
+                        <i class="fa fa-plus"></i> Thêm sản phẩm
+                    </button>
+                </div>
             </div>
 
-            <div class="table-footer">
-                <select name="kieuTimSanPham">
-                    <option value="ma">Tìm theo mã</option>
-                    <option value="ten">Tìm theo tên</option>
-                </select>
-                <input type="text" placeholder="Tìm kiếm..." onkeyup="timKiemSanPham(this)">
-                <button onclick="document.getElementById('khungThemSanPham').style.transform = 'scale(1)'; autoMaSanPham()">
-                    <i class="fa fa-plus-square"></i>
-                    Thêm sản phẩm
-                </button>
-            </div>
-
+            <!-- Form Thêm sản phẩm -->
             <div id="khungThemSanPham" class="overlay">
-                <span class="close" onclick="this.parentElement.style.transform = 'scale(0)';">&times;</span>
+                <span class="close" onclick="this.parentElement.style.transform='scale(0)';">&times;</span>
                 <table class="overlayTable table-outline table-content table-header">
-                    <tr>
-                        <th colspan="2">Thêm Sản Phẩm</th>
-                    </tr>
-                    <tr>
-                        <td>Mã sản phẩm:</td>
-                        <td><input type="text" id="maspThem"></td>
-                    </tr>
-                    <tr>
-                        <td>Tên sản phẩm:</td>
-                        <td><input type="text"></td>
-                    </tr>
+                    <tr><th colspan="2">Thêm Sản Phẩm Mới</th></tr>
+                    <tr><td>Mã sản phẩm:</td><td><input type="text" id="maspThem"></td></tr>
+                    <tr><td>Tên sản phẩm:</td><td><input type="text"></td></tr>
                     <tr>
                         <td>Hãng:</td>
                         <td>
                             <select name="chonCompany" onchange="autoMaSanPham(this.value)">
                                 <script>
-                                    var company = ["Apple", "Samsung", "Oppo", "Nokia", "Huawei", "Xiaomi","Realme", "Vivo", "Philips", "Mobell", "Mobiistar", "Itel","Coolpad", "HTC", "Motorola"];
-                                    for(var c of company) {
-                                        document.writeln(`<option value="`+c+`">`+c+`</option>`);
-                                    }
+                                    var company = ["Apple","Samsung","Oppo","Nokia","Huawei","Xiaomi","Realme","Vivo","Philips","Mobell","Mobiistar","Itel","Coolpad","HTC","Motorola"];
+                                    for(var c of company) { document.writeln(`<option value="${c}">${c}</option>`); }
                                 </script>
                             </select>
                         </td>
                     </tr>
                     <tr>
-                        <td>Hình:</td>
+                        <td>Hình ảnh:</td>
                         <td>
                             <img class="hinhDaiDien" id="anhDaiDienSanPhamThem" src="">
-                            <input type="file" accept="image/*" onchange="capNhatAnhSanPham(this.files, 'anhDaiDienSanPhamThem')">
+                            <input type="file" accept="image/*" onchange="capNhatAnhSanPham(this.files,'anhDaiDienSanPhamThem')">
                         </td>
                     </tr>
-                    <tr>
-                        <td>Giá tiền:</td>
-                        <td><input type="text"></td>
-                    </tr>
-                    <tr>
-                        <td>Số sao (số nguyên 0->5):</td>
-                        <td><input type="text"></td>
-                    </tr>
-                    <tr>
-                        <td>Đánh giá (số nguyên):</td>
-                        <td><input type="text"></td>
-                    </tr>
+                    <tr><td>Giá tiền:</td><td><input type="text"></td></tr>
+                    <tr><td>Số sao (0–5):</td><td><input type="text"></td></tr>
+                    <tr><td>Số đánh giá:</td><td><input type="text"></td></tr>
                     <tr>
                         <td>Khuyến mãi:</td>
                         <td>
                             <select>
                                 <option value="">Không</option>
-                                <option value="tragop">Trả góp</option>
+                                <option value="tragop">Trả góp 0%</option>
                                 <option value="giamgia">Giảm giá</option>
                                 <option value="giareonline">Giá rẻ online</option>
                                 <option value="moiramat">Mới ra mắt</option>
                             </select>
                         </td>
                     </tr>
+                    <tr><td>Giá trị KM:</td><td><input type="text"></td></tr>
+                    <tr><th colspan="2">Thông số kỹ thuật</th></tr>
+                    <tr><td>Màn hình:</td><td><input type="text"></td></tr>
+                    <tr><td>Hệ điều hành:</td><td><input type="text"></td></tr>
+                    <tr><td>Camera sau:</td><td><input type="text"></td></tr>
+                    <tr><td>Camera trước:</td><td><input type="text"></td></tr>
+                    <tr><td>CPU:</td><td><input type="text"></td></tr>
+                    <tr><td>RAM:</td><td><input type="text"></td></tr>
+                    <tr><td>Bộ nhớ trong:</td><td><input type="text"></td></tr>
+                    <tr><td>Thẻ nhớ:</td><td><input type="text"></td></tr>
+                    <tr><td>Dung lượng Pin:</td><td><input type="text"></td></tr>
                     <tr>
-                        <td>Giá trị khuyến mãi:</td>
-                        <td><input type="text" placeholder=""></td>
-                    </tr>
-                    <tr>
-                        <th colspan="2">Thông số kĩ thuật</th>
-                    </tr>
-                    <tr>
-                        <td>Màn hình:</td>
-                        <td><input type="text"></td>
-                    </tr>
-                    <tr>
-                        <td>Hệ điều hành:</td>
-                        <td><input type="text"></td>
-                    </tr>
-                    <tr>
-                        <td>Camara sau:</td>
-                        <td><input type="text"></td>
-                    </tr>
-                    <tr>
-                        <td>Camara trước:</td>
-                        <td><input type="text"></td>
-                    </tr>
-                    <tr>
-                        <td>CPU:</td>
-                        <td><input type="text"></td>
-                    </tr>
-                    <tr>
-                        <td>RAM:</td>
-                        <td><input type="text"></td>
-                    </tr>
-                    <tr>
-                        <td>Bộ nhớ trong:</td>
-                        <td><input type="text"></td>
-                    </tr>
-                    <tr>
-                        <td>Thẻ nhớ:</td>
-                        <td><input type="text"></td>
-                    </tr>
-                    <tr>
-                        <td>Dung lượng Pin:</td>
-                        <td><input type="text"></td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" class="table-footer"> <button onclick="themSanPham()">THÊM</button> </td>
+                        <td colspan="2" style="text-align:center; padding:14px; background:#f8fafc">
+                            <button onclick="themSanPham()" style="padding:10px 32px;border-radius:8px;background:var(--accent);color:#fff;border:none;font-weight:600;font-size:0.9rem;cursor:pointer">
+                                <i class="fa fa-plus"></i> THÊM SẢN PHẨM
+                            </button>
+                        </td>
                     </tr>
                 </table>
             </div>
             <div id="khungSuaSanPham" class="overlay"></div>
-        </div> <!-- // sanpham -->
+        </div>
 
-
-        <!-- Đơn Hàng -->
+        <!-- ========== ĐƠN HÀNG ========== -->
         <div class="donhang">
-            <table class="table-header">
-                <tr>
-                    <!-- Theo độ rộng của table content -->
-                    <th title="Sắp xếp" style="width: 5%" onclick="sortDonHangTable('stt')">Stt <i class="fa fa-sort"></i></th>
-                    <th title="Sắp xếp" style="width: 13%" onclick="sortDonHangTable('madon')">Mã đơn <i class="fa fa-sort"></i></th>
-                    <th title="Sắp xếp" style="width: 7%" onclick="sortDonHangTable('khach')">Khách <i class="fa fa-sort"></i></th>
-                    <th title="Sắp xếp" style="width: 20%" onclick="sortDonHangTable('sanpham')">Sản phẩm <i class="fa fa-sort"></i></th>
-                    <th title="Sắp xếp" style="width: 15%" onclick="sortDonHangTable('tongtien')">Tổng tiền <i class="fa fa-sort"></i></th>
-                    <th title="Sắp xếp" style="width: 10%" onclick="sortDonHangTable('ngaygio')">Ngày giờ <i class="fa fa-sort"></i></th>
-                    <th title="Sắp xếp" style="width: 10%" onclick="sortDonHangTable('trangthai')">Trạng thái <i class="fa fa-sort"></i></th>
-                    <th style="width: 10%">Hành động</th>
-                </tr>
-            </table>
-
-            <div class="table-content">
-            </div>
-
-            <div class="table-footer">
-                <div class="timTheoNgay">
-                    Từ ngày: <input type="date" id="fromDate">
-                    Đến ngày: <input type="date" id="toDate">
-
-                    <button onclick="locDonHangTheoKhoangNgay()"><i class="fa fa-search"></i> Tìm</button>
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3><i class="fa fa-file-text-o" style="color:var(--cyan)"></i> &nbsp;Quản lý đơn hàng</h3>
+                    <span style="font-size:0.8rem;color:var(--text-secondary)">Click vào đơn hàng để xem chi tiết</span>
                 </div>
-
-                <select name="kieuTimDonHang">
-                    <option value="ma">Tìm theo mã đơn</option>
-                    <option value="khachhang">Tìm theo tên khách hàng</option>
-                    <option value="trangThai">Tìm theo trạng thái</option>
-                </select>
-                <input type="text" placeholder="Tìm kiếm..." onkeyup="timKiemDonHang(this)">
+                <table class="table-header">
+                    <tr>
+                        <th style="width:4%">Stt</th>
+                        <th style="width:16%" onclick="sortDonHangTable('madon')">Mã đơn <i class="fa fa-sort"></i></th>
+                        <th style="width:12%" onclick="sortDonHangTable('khach')">Khách hàng <i class="fa fa-sort"></i></th>
+                        <th style="width:22%" onclick="sortDonHangTable('sanpham')">Sản phẩm</th>
+                        <th style="width:13%" onclick="sortDonHangTable('tongtien')">Tổng tiền <i class="fa fa-sort"></i></th>
+                        <th style="width:13%" onclick="sortDonHangTable('ngaygio')">Ngày đặt <i class="fa fa-sort"></i></th>
+                        <th style="width:12%" onclick="sortDonHangTable('trangthai')">Trạng thái <i class="fa fa-sort"></i></th>
+                        <th style="width:8%;text-align:center">Chi tiết</th>
+                    </tr>
+                </table>
+                <div class="table-content"></div>
+                <div class="table-footer">
+                    <div class="timTheoNgay">
+                        <i class="fa fa-calendar"></i>
+                        Từ: <input type="date" id="fromDate">
+                        Đến: <input type="date" id="toDate">
+                        <button onclick="locDonHangTheoKhoangNgay()" style="padding:6px 12px">
+                            <i class="fa fa-search"></i> Lọc
+                        </button>
+                    </div>
+                    <select name="kieuTimDonHang">
+                        <option value="ma">Mã đơn hàng</option>
+                        <option value="khachhang">Tên khách hàng</option>
+                        <option value="trangThai">Trạng thái</option>
+                    </select>
+                    <input type="text" placeholder="🔍 Tìm kiếm đơn hàng..." onkeyup="timKiemDonHang(this)" style="width:220px">
+                </div>
             </div>
+        </div>
 
-        </div> <!-- // don hang -->
-
-
-        <!-- Khách hàng -->
+        <!-- ========== KHÁCH HÀNG ========== -->
         <div class="khachhang">
-            <table class="table-header">
-                <tr>
-                    <!-- Theo độ rộng của table content -->
-                    <th title="Sắp xếp" style="width: 5%" onclick="sortKhachHangTable('stt')">Stt <i class="fa fa-sort"></i></th>
-                    <th title="Sắp xếp" style="width: 15%" onclick="sortKhachHangTable('hoten')">Họ tên <i class="fa fa-sort"></i></th>
-                    <th title="Sắp xếp" style="width: 20%" onclick="sortKhachHangTable('email')">Email <i class="fa fa-sort"></i></th>
-                    <th title="Sắp xếp" style="width: 20%" onclick="sortKhachHangTable('taikhoan')">Tài khoản <i class="fa fa-sort"></i></th>
-                    <th title="Sắp xếp" style="width: 10%" onclick="sortKhachHangTable('matkhau')">Mật khẩu <i class="fa fa-sort"></i></th>
-                    <th style="width: 10%">Hành động</th>
-                </tr>
-            </table>
-
-            <div class="table-content">
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3><i class="fa fa-users" style="color:var(--success)"></i> &nbsp;Quản lý khách hàng</h3>
+                </div>
+                <table class="table-header">
+                    <tr>
+                        <th style="width:5%">Stt</th>
+                        <th style="width:18%" onclick="sortKhachHangTable('hoten')">Họ tên <i class="fa fa-sort"></i></th>
+                        <th style="width:22%" onclick="sortKhachHangTable('email')">Email <i class="fa fa-sort"></i></th>
+                        <th style="width:18%" onclick="sortKhachHangTable('taikhoan')">Tài khoản <i class="fa fa-sort"></i></th>
+                        <th style="width:12%" onclick="sortKhachHangTable('matkhau')">Mật khẩu <i class="fa fa-sort"></i></th>
+                        <th style="width:10%;text-align:center">Trạng thái</th>
+                        <th style="width:15%;text-align:center">Hành động</th>
+                    </tr>
+                </table>
+                <div class="table-content"></div>
+                <div class="table-footer">
+                    <select name="kieuTimKhachHang">
+                        <option value="ten">Họ tên</option>
+                        <option value="email">Email</option>
+                        <option value="taikhoan">Tài khoản</option>
+                    </select>
+                    <input type="text" placeholder="🔍 Tìm kiếm khách hàng..." onkeyup="timKiemNguoiDung(this)" style="width:220px">
+                    <button onclick="openThemNguoiDung()"><i class="fa fa-plus"></i> Thêm người dùng</button>
+                </div>
             </div>
+        </div>
 
-            <div class="table-footer">
-                <select name="kieuTimKhachHang">
-                    <option value="ten">Tìm theo họ tên</option>
-                    <option value="email">Tìm theo email</option>
-                    <option value="taikhoan">Tìm theo tài khoản</option>
-                </select>
-                <input type="text" placeholder="Tìm kiếm..." onkeyup="timKiemNguoiDung(this)">
-                <button onclick="openThemNguoiDung()"><i class="fa fa-plus-square"></i> Thêm người dùng</button>
+    </div><!-- /.main -->
+
+    <!-- ========== MODAL CHI TIẾT ĐƠN HÀNG ========== -->
+    <div id="orderDetailModal">
+        <div class="order-detail-panel">
+            <div class="odp-header">
+                <h2><i class="fa fa-file-text-o"></i> &nbsp;Chi tiết đơn hàng</h2>
+                <button class="odp-close" onclick="closeOrderDetail()">&#x2715;</button>
             </div>
-        </div> <!-- // khach hang -->
-    </div> <!-- // main -->
+            <div class="odp-body" id="odpBody">
+                <!-- Được điền bởi JS -->
+            </div>
+            <div class="odp-footer" id="odpFooter">
+                <!-- Được điền bởi JS -->
+            </div>
+        </div>
+    </div>
 
-
-    <footer>
-
-    </footer>
+    <footer></footer>
 </body>
-
 </html>
